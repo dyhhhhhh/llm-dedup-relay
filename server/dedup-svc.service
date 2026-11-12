@@ -1,0 +1,15 @@
+[Unit]
+Description=LLM dedup relay server-side service
+After=network.target
+
+[Service]
+Type=simple
+# Adjust User/WorkingDirectory/Environment to your deployment.
+User=caddy
+WorkingDirectory=/opt/dedup-svc
+ExecStart=/usr/bin/python3 /opt/dedup-svc/dedup_svc.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

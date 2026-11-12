@@ -1,0 +1,21 @@
+# Caddy site block for the domain your LLM client talks to.
+#
+# Requests carrying the dedup protocol header (X-Dedup-Orig) go to dedup-svc;
+# everything else goes straight to the upstream gateway. Both paths are
+# transparent to normal clients that never send these headers.
+#
+# Replace api.example.com with your domain and adjust upstream ports.
+
+api.example.com {
+	encode gzip zstd
+
+	@dedup header X-Dedup-Orig *
+
+	handle @dedup {
+		reverse_proxy 127.0.0.1:8543
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:8081
+	}
+}

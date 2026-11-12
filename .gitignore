@@ -1,0 +1,11 @@
+# Local artifacts
+cache/
+*.log
+certs/
+*.crt
+*.key
+*.pem
+config.json
+__pycache__/
+*.pyc
+.DS_Store
