@@ -130,6 +130,7 @@ python client/dedup_relay.py   # 配置见 client/config.example.json
 | `max_body_bytes` | 67108864 | body 大于此值不作为字典 |
 | `zstd_level` | 19 | zstd 压缩级别 |
 | `dict_gain_ratio` | 0.9 | 压缩后须小于原始 90% 才走字典（否则全量） |
+| `inject_service_tier` | null | 往 JSON 请求体注入 `service_tier`（如 `"fast"` 启用订阅 Fast/Priority 模式）。Codex 仅在 OAuth 登录时才发送该字段，API-key 接入需靠 relay 注入；订阅账号下 Fast 计费约 2.5×，置 null 关闭 |
 
 ### server/config.json
 

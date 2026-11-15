@@ -53,6 +53,12 @@ DEFAULTS = {
     "zstd_level": 19,
     # Only use the dictionary when it actually shrinks the body by 10%+.
     "dict_gain_ratio": 0.9,
+    # Inject "service_tier" into JSON request bodies (e.g. "fast" for
+    # ChatGPT-subscription Fast/Priority mode). Codex sends service_tier only
+    # when logged in via OAuth, so API-key setups need this relay-side
+    # injection. Set to null to disable. Note: Fast mode bills ~2.5x on
+    # subscription accounts.
+    "inject_service_tier": None,
 }
 
 _keymap = {}        # route key -> sha256 of last body for that route
@@ -273,6 +279,30 @@ HOP = {"connection", "keep-alive", "proxy-authenticate", "proxy-authorization", 
        "trailers", "transfer-encoding", "upgrade", "host", "content-length"}
 
 
+def inject_service_tier(method, headers, body):
+    """Add "service_tier" to JSON bodies when configured (relay-side Fast mode).
+
+    Injection happens BEFORE dictionary compression, so the injected body
+    enters the dictionary chain and sha256 integrity is unaffected.
+    """
+    tier = CFG.get("inject_service_tier")
+    if not tier or method != "POST":
+        return body
+    if "json" not in (headers.get("content-type") or "").lower():
+        return body
+    if not body or len(body) > MAX_BODY:
+        return body
+    try:
+        obj = json.loads(body)
+    except Exception:
+        return body
+    if not isinstance(obj, dict) or obj.get("service_tier") is not None:
+        return body
+    new = {"service_tier": tier}
+    new.update(obj)
+    return json.dumps(new, ensure_ascii=False, separators=(",", ":")).encode()
+
+
 class DedupHandler:
     def __init__(self, conn, addr):
         self.conn = conn
@@ -320,6 +350,7 @@ class DedupHandler:
                 k, _, v = line.decode("latin1").partition(":")
                 headers[k.strip().lower()] = v.strip()
             body = self.read_body(headers)
+            body = inject_service_tier(method, headers, body)
             raw_len = len(body)
             log("step1 body read: %.2fMB" % (raw_len / 1e6))
 

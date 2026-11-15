@@ -12,5 +12,6 @@
   "max_body_bytes": 67108864,
   "local_cache_files": 40,
   "zstd_level": 19,
-  "dict_gain_ratio": 0.9
+  "dict_gain_ratio": 0.9,
+  "inject_service_tier": "fast"
 }
